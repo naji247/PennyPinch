@@ -1,4 +1,9 @@
 var knex = require('../db');
+var Promise = require('bluebird');
+var graph = require('fbgraph');
+
+Promise.promisifyAll(graph);
+
 
 module.exports = {
   findUser,
@@ -14,6 +19,7 @@ function findUser(req, res) {
     return res.status(422).send({ error: 'You need valid token and user id.' });
   }
 
+
   // look user up in the DB so we can check
   // if the tokens match
   knex('users').where({
@@ -22,15 +28,33 @@ function findUser(req, res) {
     if (user.length == 0) {
       return res.status(404).send({error: 'User not found, try a different id.'});
     }
+    verifyToken(fbtoken, res).then( () => {
+      res.send(user[0]);
+    })
 
-    if (user[0].fbtoken != fbtoken) {
-      return res.status(401).send({error: 'Unauthorized: Token invalid.'});
-      // TODO: check if token is valid
-    }
-
-    return res.status(200).send(user);
-  }).catch( (err) => {
+  })
+  .catch( (err) => {
     return res.status(500).send({error: 'Problem verifying user.'});
+  });
+}
+
+function verifyToken(token, res) {
+  return new Promise( (resolve, reject) => {
+    graph.setAccessToken(token);
+    graph.getAsync('debug_token', {"input_token": token})
+    .then( (tokenInfo) => {
+      //TODO: Add check for current app matches token
+      if (!tokenInfo.data.is_valid) {
+        return res.status(401).send({error: 'Unauthorized: Token invalid.'})
+      }
+      resolve();
+    })
+    .catch( (err) => {
+      if (err.type == 'OAuthException' ) {
+        return res.status(401).send({error: err.message});
+      }
+      return res.status(500).send({error: "Failed to validate token."});
+    })
   });
 }
 

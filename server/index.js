@@ -1,5 +1,6 @@
 var express = require('express');
 var app = express();
+var graph = require('fbgraph');
 var db  = require('./db');
 const router = require('express').Router();
 
