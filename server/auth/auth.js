@@ -1,8 +1,35 @@
 var knex = require('../db');
+var graph = require('fbgraph');
+var Promise = require('bluebird');
+var fb_config = require('../config/facebook');
+
+Promise.promisifyAll(graph);
+
 
 module.exports = {
-  verifyUser
+  verifyUser,
+  getLongToken
 };
+
+function getLongToken(req, res) {
+  const shortToken = req.headers.fbtoken;
+
+  graph.setAccessToken(shortToken);
+  var params = {
+    'grant_type': 'fb_exchange_token',
+    'client_id': fb_config.client_id,
+    'client_secret': fb_config.client_secret,
+    'fb_exchange_token': shortToken
+  };
+  
+  graph.getAsync('/oauth/access_token', params).then((tokenInfo) => {
+    res.send(tokenInfo);
+  }).catch( (err) => {
+    res.status(401).send({error: err.message});
+  });
+}
+
+
 
 // Authenticate the user
 function verifyUser() {
