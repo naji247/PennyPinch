@@ -3,8 +3,8 @@ var request = require("supertest");
 var knex = require("../server/db");
 
 const createUser = require("../server/user/user").createUser;
-describe("User Tests", function() {
-  describe("#get user", function() {
+describe("User Tests", () => {
+  describe("#get user", () => {
     var server;
     var user = {
       fbtoken:
@@ -17,43 +17,61 @@ describe("User Tests", function() {
 
     var missingUser = {
       fbtoken:
-        "EAADWQgBxLzgBALE8ZB6uewrADX3dj2QB8bhdl9R2NMN4iZBdEuj6hVilwMvDRUAkNu1mDXI3Qp2sCO88RRFUXIANQj3aXWZAID0n7LX813rvJmUZBPESD0Eo7sjydGRNaoAQmZBFDD3oOyd0xoIZB5JBvb52ZCkhJV72NFPkPFHIqZBmCsptqXoraxSj6seuQcQZD",
+        "EAADWQgBxLzgBAKH53iXLDUZCuxjMRdUGUc4cAsGiLeeorszsBZAJm9gvXl3QUc9sKtgTMvVBb4QSYaXaY5SbXNkYO3o9oz9xLMPbOLqErZA4IYqL2a22NHzOd7zzeVkz5I58fK6dB54TKi6AsuBBwOld1XwuJXgqdAc0btZCewZDZD",
       fbid: "1555981821079083",
       first_name: "Derek",
       last_name: "Lou",
       email: "derek.dlou@gmail.com"
     };
 
-    beforeEach(function() {
+    beforeEach(done => {
       server = require("../server/index");
+      knex.migrate
+        .rollback()
+        .then(function() {
+          return knex.migrate.latest();
+        })
+        .then(function() {
+          return knex.seed.run();
+        })
+        .then(function() {
+          done();
+        });
     });
 
-    afterEach(function() {
-      server.close();
+    afterEach(done => {
+      knex.migrate.rollback().then(() => {
+        server.close();
+        done();
+      });
     });
 
-    it("should return 200 when asking for the existing user", function(done) {
-      knex("users").insert();
+    it("should return 200 when asking for the existing user", done => {
       request(server)
         .get("/users/" + user.fbid)
         .set("fbtoken", user.fbtoken)
         .expect(200, done);
     });
 
-    it("should return 401 when sent invalid token", function(done) {
+    it("should return 401 when sent invalid token", done => {
       request(server)
         .get("/users/" + user.fbid)
         .set("fbtoken", "fake token")
         .expect(401, done);
     });
 
-    it("should return 401 when sent fbid that doesn't match token", function(
-      done
-    ) {
+    it("should return 401 when sent fbid that doesn't match token", done => {
       request(server)
         .get("/users/" + "fake fbid")
         .set("fbtoken", user.fbtoken)
         .expect(401, done);
+    });
+
+    it("should return 404 when asking for authenticated missing user", done => {
+      request(server)
+        .get("/users/" + missingUser.fbid)
+        .set("fbtoken", missingUser.fbtoken)
+        .expect(404, done);
     });
   });
 });
