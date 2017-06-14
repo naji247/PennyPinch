@@ -11,8 +11,10 @@ var port = 4000;
 
 require("./config/middlewares")(app);
 
-app.listen(port);
+var server = app.listen(port);
 console.log("Listening on port", port);
 
 app.use("/auth", auth);
 app.use("/users", require("./user/routes"));
+
+module.exports = server;
