@@ -1,9 +1,9 @@
-var knex = require('../db');
+var knex = require("../db");
 
 module.exports = {
-  validate,
+  validate
 };
 
 function validate(req, res) {
-  res.status(200).send('Valid user!');
+  res.status(200).send("Valid user!");
 }
