@@ -1,0 +1,77 @@
+var db = require("../db");
+var Promise = require("bluebird");
+var graph = require("fbgraph");
+var fb_config = require("../config/facebook");
+Promise.promisifyAll(graph);
+
+const { InvalidRequestError } = require("../errors/common_errors");
+const {
+  UserNotFoundError,
+  UserUnauthorizedError,
+  UserCreationError
+} = require("../errors/user_errors");
+
+exports.create = (token, fbid, first_name, last_name, email) => {
+  if (!token || !fbid || !first_name || !last_name || !email) {
+    throw InvalidRequestError();
+  }
+  const user = {
+    fbtoken: token,
+    fbid: fbid,
+    first_name: first_name,
+    last_name: last_name,
+    email: email
+  };
+  return db("users").returning("*").insert(user).catch(err => {
+    throw UserCreationError(err);
+  });
+};
+
+exports.get = fbid => {
+  if (!fbid) {
+    throw InvalidRequestError();
+  }
+
+  return db("users").first("*").where({ fbid: fbid }).then(user => {
+    if (!user) {
+      throw UserNotFoundError();
+    }
+    return user;
+  });
+};
+
+exports.authenticate = (token, fbid) => {
+  if (!token || !fbid) {
+    throw InvalidRequestError();
+  }
+  graph.setAccessToken(token);
+  return graph
+    .getAsync("debug_token", { input_token: token })
+    .then(tokenInfo => {
+      //TODO: Add check for current app matches token
+      if (!tokenInfo.data.is_valid || tokenInfo.data.user_id != fbid) {
+        throw UserUnauthorizedError();
+      }
+      return tokenInfo;
+    })
+    .catch(err => {
+      throw UserUnauthorizedError();
+    });
+};
+
+exports.getLongToken = shortToken => {
+  if (!shortToken) {
+    throw InvalidRequestError();
+  }
+  graph.setAccessToken(shortToken);
+  var params = {
+    grant_type: "fb_exchange_token",
+    client_id: fb_config.client_id,
+    client_secret: fb_config.client_secret,
+    fb_exchange_token: shortToken
+  };
+
+  return graph.getAsync("/oauth/access_token", params).catch(err => {
+    throw InvalidRequestError();
+  });
+};
