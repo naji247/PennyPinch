@@ -20,6 +20,7 @@ module.exports = app => {
           throw UserUnauthorizedError();
         }
         next();
+        return null;
       })
       .catch(err => {
         next(UserUnauthorizedError());
