@@ -47,6 +47,7 @@ describe("User Tests", () => {
   it("should return 200 when asking for the existing user", done => {
     request(server)
       .get("/users/" + user.fbid)
+      .set("fbid", user.fbid)
       .set("fbtoken", user.fbtoken)
       .expect(200, done);
   });
@@ -54,13 +55,15 @@ describe("User Tests", () => {
   it("should return 401 when sent invalid token", done => {
     request(server)
       .get("/users/" + user.fbid)
+      .set("fbid", user.fbid)
       .set("fbtoken", "fake token")
       .expect(401, done);
   });
 
   it("should return 401 when sent fbid that doesn't match token", done => {
     request(server)
-      .get("/users/" + "fake fbid")
+      .get("/users/" + "fakefbid")
+      .set("fbid", "fakefbid")
       .set("fbtoken", user.fbtoken)
       .expect(401, done);
   });
@@ -69,6 +72,7 @@ describe("User Tests", () => {
     request(server)
       .get("/users/" + missingUser.fbid)
       .set("fbtoken", missingUser.fbtoken)
+      .set("fbid", missingUser.fbid)
       .expect(404, done);
   });
 });

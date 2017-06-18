@@ -2,12 +2,14 @@ var express = require("express"),
   app = express();
 
 var db = require("./db");
+// Middleware before controllers
+require("./middlewares/parser_middleware")(app);
+require("./middlewares/auth_middleware")(app);
 
-require("./middlewares/parser")(app);
-app.use(require("./controllers"));
+app.use(require("./routes"));
 
+// Middleware after controllers
+require("./middlewares/error_middleware")(app);
 var server = app.listen(4000);
-
-require("./middlewares/error_handler")(app);
 
 module.exports = server;

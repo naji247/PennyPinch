@@ -40,25 +40,6 @@ exports.get = fbid => {
   });
 };
 
-exports.authenticate = (token, fbid) => {
-  if (!token || !fbid) {
-    throw InvalidRequestError();
-  }
-  graph.setAccessToken(token);
-  return graph
-    .getAsync("debug_token", { input_token: token })
-    .then(tokenInfo => {
-      //TODO: Add check for current app matches token
-      if (!tokenInfo.data.is_valid || tokenInfo.data.user_id != fbid) {
-        throw UserUnauthorizedError();
-      }
-      return tokenInfo;
-    })
-    .catch(err => {
-      throw UserUnauthorizedError();
-    });
-};
-
 exports.getLongToken = shortToken => {
   if (!shortToken) {
     throw InvalidRequestError();
