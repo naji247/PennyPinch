@@ -2,7 +2,7 @@ var assert = require("assert");
 var request = require("supertest");
 var knex = require("../db");
 
-describe("User Tests", () => {
+describe("Transaction Tests", () => {
   var server;
   var user = {
     fbtoken:
@@ -41,35 +41,17 @@ describe("User Tests", () => {
     });
   });
 
-  it("should return 200 when asking for the existing user", done => {
+  it("should return 200 when creating a new transaction", done => {
     request(server)
-      .get("/users/" + user.fbid)
+      .post("/transactions/")
       .set("fbid", user.fbid)
       .set("fbtoken", user.fbtoken)
+      .send({
+        fbid: "10213562629564298",
+        amount: -10,
+        date: "2017-06-30",
+        description: "pizza"
+      })
       .expect(200, done);
-  });
-
-  it("should return 401 when sent invalid token", done => {
-    request(server)
-      .get("/users/" + user.fbid)
-      .set("fbid", user.fbid)
-      .set("fbtoken", "fake token")
-      .expect(401, done);
-  });
-
-  it("should return 401 when sent fbid that doesn't match token", done => {
-    request(server)
-      .get("/users/" + "fakefbid")
-      .set("fbid", "fakefbid")
-      .set("fbtoken", user.fbtoken)
-      .expect(401, done);
-  });
-
-  it("should return 404 when asking for authenticated missing user", done => {
-    request(server)
-      .get("/users/" + missingUser.fbid)
-      .set("fbtoken", missingUser.fbtoken)
-      .set("fbid", missingUser.fbid)
-      .expect(404, done);
   });
 });
