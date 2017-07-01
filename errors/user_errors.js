@@ -30,8 +30,19 @@ const UserCreationError = err => {
   };
 };
 
+const UserIDMismatchError = err => {
+  var message = "ID in create request does not match ID of headers";
+  var statusCode = 406;
+  return {
+    type: "HTTPError",
+    statusCode: statusCode,
+    message: message
+  };
+};
+
 module.exports = {
   UserNotFoundError,
   UserUnauthorizedError,
-  UserCreationError
+  UserCreationError,
+  UserIDMismatchError
 };

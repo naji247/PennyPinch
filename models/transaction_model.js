@@ -19,6 +19,14 @@ exports.get = transactionid => {
     });
 };
 
+exports.getTransactionsForUser = fbid => {
+  if (!fbid) {
+    throw InvalidRequestError();
+  }
+
+  return db("transactions").select("*").where({ fbid: fbid });
+};
+
 exports.create = (fbid, amount, date, description) => {
   if (!fbid || !amount || !date || !description) {
     throw InvalidRequestError();
@@ -30,7 +38,6 @@ exports.create = (fbid, amount, date, description) => {
     description: description
   };
   return db("transactions").returning("*").insert(transaction).catch(err => {
-    console.log(err);
     throw TransactionCreationError(err);
   });
 };

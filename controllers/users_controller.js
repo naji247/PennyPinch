@@ -1,6 +1,7 @@
 var express = require("express"),
   router = express.Router(),
   User = require("../models/user_model");
+const { UserIDMismatchError } = require("../errors/user_errors");
 
 router.get("/:fbid", function(req, res, next) {
   const token = req.headers.fbtoken;
@@ -17,14 +18,19 @@ router.get("/:fbid", function(req, res, next) {
 
 router.post("/", function(req, res, next) {
   const { fbtoken, fbid, first_name, last_name, email } = req.body;
+  const headerid = req.headers.fbid;
 
-  User.create(fbtoken, fbid, first_name, last_name, email)
-    .then(user => {
-      res.json(user[0]);
-    })
-    .catch(err => {
-      next(err);
-    });
+  if (fbid && fbid != headerid) {
+    next(UserIDMismatchError());
+  } else {
+    User.create(fbtoken, fbid, first_name, last_name, email)
+      .then(user => {
+        res.json(user[0]);
+      })
+      .catch(err => {
+        next(err);
+      });
+  }
 });
 
 module.exports = router;
