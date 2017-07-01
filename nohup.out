@@ -1,0 +1,16 @@
+
+> pennygrub@1.0.0 start /Users/dereklou/Projects/PennyPinch
+> NODE_ENV=development ./node_modules/.bin/nodemon app.js --ignore node_modules/
+
+[33m[nodemon] 1.11.0[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching: *.*[39m
+[32m[nodemon] starting `node app.js`[39m
+
+> pennygrub@1.0.0 start /Users/dereklou/Projects/PennyPinch
+> NODE_ENV=development ./node_modules/.bin/nodemon app.js --ignore node_modules/
+
+[33m[nodemon] 1.11.0[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching: *.*[39m
+[32m[nodemon] starting `node app.js`[39m

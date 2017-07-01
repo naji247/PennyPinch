@@ -20,7 +20,7 @@ router.post("/", function(req, res, next) {
 
   User.create(fbtoken, fbid, first_name, last_name, email)
     .then(user => {
-      res.json(user);
+      res.json(user[0]);
     })
     .catch(err => {
       next(err);
