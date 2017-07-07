@@ -33,8 +33,6 @@ function getTimeIfValid(time) {
 }
 
 exports.getTransactionsForUser = (fbid, start, end) => {
-  console.log(start);
-  console.log(end);
   start = getTimeIfValid(start);
   end = getTimeIfValid(end);
 

@@ -55,7 +55,7 @@ describe("Transaction Tests", () => {
   });
   it("should return 200 when getting a user's transactions", done => {
     request(server)
-      .get("users/${user.fbid}/transactions/")
+      .get(`/users/${user.fbid}/transactions/`)
       .set("fbid", user.fbid)
       .set("fbtoken", user.fbtoken)
       .expect(200, done);
