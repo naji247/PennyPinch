@@ -17,8 +17,10 @@ const { UserIDMismatchError } = require("../errors/user_errors");
 // });
 
 router.get("/", function(req, res, next) {
+  const start = req.query.start;
+  const end = req.query.end;
   const fbid = req.params.fbid;
-  Transaction.getTransactionsForUser(fbid)
+  Transaction.getTransactionsForUser(fbid, start, end)
     .then(transactions => {
       res.json(transactions);
     })

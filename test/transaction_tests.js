@@ -43,15 +43,21 @@ describe("Transaction Tests", () => {
 
   it("should return 200 when creating a new transaction", done => {
     request(server)
-      .post("/transactions/")
+      .post(`/users/${user.fbid}/transactions/`)
       .set("fbid", user.fbid)
       .set("fbtoken", user.fbtoken)
       .send({
-        fbid: "10213562629564298",
         amount: -10,
         date: "2017-06-30",
         description: "pizza"
       })
+      .expect(200, done);
+  });
+  it("should return 200 when getting a user's transactions", done => {
+    request(server)
+      .get("users/${user.fbid}/transactions/")
+      .set("fbid", user.fbid)
+      .set("fbtoken", user.fbtoken)
       .expect(200, done);
   });
 });

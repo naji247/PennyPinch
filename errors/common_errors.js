@@ -6,6 +6,15 @@ const InvalidRequestError = () => {
   };
 };
 
+const DateRangeError = () => {
+  return {
+    type: "HTTPError",
+    statusCode: 400,
+    message: "Invalid date range."
+  };
+};
+
 module.exports = {
-  InvalidRequestError
+  InvalidRequestError,
+  DateRangeError
 };
