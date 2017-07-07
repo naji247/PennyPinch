@@ -49,6 +49,19 @@ describe("User Tests", () => {
       .expect(200, done);
   });
 
+  it("should return 200 when logging in an existing user", done => {
+    request(server)
+      .post("/auth/login")
+      .set("fbid", user.fbid)
+      .set("fbtoken", user.fbtoken)
+      .send({
+        first_name: "Naseem",
+        last_name: "Al-Naji",
+        email: "naji247@gmail.com"
+      })
+      .expect(200, done);
+  });
+
   it("should return 401 when sent invalid token", done => {
     request(server)
       .get("/users/" + user.fbid)

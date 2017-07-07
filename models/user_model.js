@@ -11,7 +11,7 @@ const {
   UserCreationError
 } = require("../errors/user_errors");
 
-exports.create = (token, fbid, first_name, last_name, email) => {
+const createUser = (token, fbid, first_name, last_name, email) => {
   if (!token || !fbid || !first_name || !last_name || !email) {
     throw InvalidRequestError();
   }
@@ -27,7 +27,7 @@ exports.create = (token, fbid, first_name, last_name, email) => {
   });
 };
 
-exports.get = fbid => {
+const getUser = fbid => {
   if (!fbid) {
     throw InvalidRequestError();
   }
@@ -40,19 +40,50 @@ exports.get = fbid => {
   });
 };
 
-exports.getLongToken = shortToken => {
-  if (!shortToken) {
+const loginUser = (token, fbid, first_name, last_name, email) => {
+  if (!token || !fbid || !first_name || !last_name || !email) {
     throw InvalidRequestError();
   }
-  graph.setAccessToken(shortToken);
+
+  var longTokenInfo = null;
+
+  graph.setAccessToken(token);
   var params = {
     grant_type: "fb_exchange_token",
     client_id: fb_config.client_id,
     client_secret: fb_config.client_secret,
-    fb_exchange_token: shortToken
+    fb_exchange_token: token
   };
 
-  return graph.getAsync("/oauth/access_token", params).catch(err => {
-    throw InvalidRequestError();
-  });
+  // Grab long token from Facebook.
+  return graph
+    .getAsync("/oauth/access_token", params)
+    .then(response => {
+      longTokenInfo = response;
+      return createUser(
+        longTokenInfo.access_token,
+        fbid,
+        first_name,
+        last_name,
+        email
+      );
+    })
+    .then(user => {
+      // Case 1: We successfully created a new user.
+      return longTokenInfo;
+    })
+    .catch(err => {
+      // Case 2: Something bad happened
+      if (!longTokenInfo || err.statusCode != 409) {
+        throw InvalidRequestError();
+      }
+      // Case 3: The user already existed in our database.
+      return longTokenInfo;
+    });
+};
+
+module.exports = {
+  loginUser,
+  createUser,
+  getUser
 };

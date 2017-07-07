@@ -7,7 +7,7 @@ router.get("/:fbid", function(req, res, next) {
   const token = req.headers.fbtoken;
   const fbid = req.params.fbid;
 
-  User.get(fbid)
+  User.getUser(fbid)
     .then(user => {
       res.json(user);
     })
@@ -23,7 +23,7 @@ router.post("/", function(req, res, next) {
   if (fbid && fbid != headerid) {
     next(UserIDMismatchError());
   } else {
-    User.create(fbtoken, fbid, first_name, last_name, email)
+    User.createUser(fbtoken, fbid, first_name, last_name, email)
       .then(user => {
         res.json(user[0]);
       })
