@@ -16,6 +16,20 @@ router.get("/:fbid", function(req, res, next) {
     });
 });
 
+router.get("/:fbid/challenges", function(req, res, next) {
+  const token = req.headers.fbtoken;
+  const fbid = req.params.fbid;
+  const active = req.query.active;
+
+  User.getChallenges(fbid, active)
+    .then(challenges => {
+      res.json(challenges);
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
 router.post("/", function(req, res, next) {
   const { fbtoken, fbid, first_name, last_name, email } = req.body;
   const headerid = req.headers.fbid;

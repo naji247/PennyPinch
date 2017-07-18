@@ -7,5 +7,6 @@ router.use(
   "/users/:fbid/transactions",
   require("./controllers/transaction_controller")
 );
+router.use("/challenges", require("./controllers/challenges_controller"));
 
 module.exports = router;

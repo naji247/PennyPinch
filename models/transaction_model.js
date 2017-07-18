@@ -42,14 +42,15 @@ exports.getTransactionsForUser = (fbid, start, end) => {
   var query = db("transactions").select("*").where({ fbid: fbid });
 
   if (!start && !end) {
-    return query.andWhereRaw(`date >= now() - interval '1 year'`);
+    query = query.andWhereRaw(`date >= now() - interval '1 year'`);
   } else if (start && !end) {
-    return query.andWhere("date", ">=", start);
+    query = query.andWhere("date", ">=", start);
   } else if (start && end && start < end) {
-    return query.andWhere("date", ">=", start).andWhere("date", "<=", end);
+    query = query.andWhere("date", ">=", start).andWhere("date", "<=", end);
   } else {
     throw DateRangeError();
   }
+  return query.orderBy("date", "desc");
 };
 
 exports.create = (fbid, amount, date, description) => {

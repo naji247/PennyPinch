@@ -82,8 +82,38 @@ const loginUser = (token, fbid, first_name, last_name, email) => {
     });
 };
 
+const getChallenges = (fbid, active) => {
+  if (!fbid) {
+    throw InvalidRequestError();
+  }
+  return db("challenges_users")
+    .select("*")
+    .where({ fbid: fbid })
+    .then(challenges_users => {
+      challenge_ids = challenges_users.map(
+        challenge_user => challenge_user.challenge_id
+      );
+      var allChallenges = db("challenges")
+        .select("*")
+        .whereIn("challenge_id", challenge_ids);
+      if (active !== undefined && active == "1") {
+        return allChallenges
+          .andWhereRaw("start_date < now()")
+          .andWhereRaw("end_date >= now()");
+      } else if (active !== undefined && active == "0") {
+        return allChallenges.andWhereRaw("end_date <= now()");
+      } else {
+        return allChallenges;
+      }
+    })
+    .catch(err => {
+      throw UserCreationError(err);
+    });
+};
+
 module.exports = {
   loginUser,
   createUser,
-  getUser
+  getUser,
+  getChallenges
 };

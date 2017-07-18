@@ -4,18 +4,6 @@ var express = require("express"),
 User = require("../models/user_model");
 const { UserIDMismatchError } = require("../errors/user_errors");
 
-// router.get("/:transactionid", function(req, res, next) {
-//   const transactionid = req.params.transactionid;
-
-//   Transaction.get(transactionid)
-//     .then(transaction => {
-//       res.json(transaction);
-//     })
-//     .catch(err => {
-//       next(err);
-//     });
-// });
-
 router.get("/", function(req, res, next) {
   const start = req.query.start;
   const end = req.query.end;
@@ -34,7 +22,8 @@ router.post("/", function(req, res, next) {
   const { amount, date, description } = req.body;
   const headersFbid = req.headers.fbid;
 
-  if (fbid && fbid != headersFbid) {
+  if (fbid != headersFbid) {
+    // path param fbid must match header fbid
     next(UserIDMismatchError());
   } else {
     Transaction.create(fbid, amount, date, description)
