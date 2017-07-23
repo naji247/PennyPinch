@@ -1,4 +1,5 @@
 var db = require("../db");
+var _ = require("underscore");
 var Promise = require("bluebird");
 var graph = require("fbgraph");
 var fb_config = require("../config/facebook");
@@ -10,6 +11,7 @@ const {
   UserUnauthorizedError,
   UserCreationError
 } = require("../errors/user_errors");
+const { ChallengeQueryError } = require("../errors/challenge_errors");
 
 const createUser = (token, fbid, first_name, last_name, email) => {
   if (!token || !fbid || !first_name || !last_name || !email) {
@@ -86,28 +88,61 @@ const getChallenges = (fbid, active) => {
   if (!fbid) {
     throw InvalidRequestError();
   }
-  return db("challenges_users")
-    .select("*")
-    .where({ fbid: fbid })
-    .then(challenges_users => {
-      challenge_ids = challenges_users.map(
-        challenge_user => challenge_user.challenge_id
-      );
-      var allChallenges = db("challenges")
-        .select("*")
-        .whereIn("challenge_id", challenge_ids);
-      if (active !== undefined && active == "1") {
-        return allChallenges
-          .andWhereRaw("start_date < now()")
-          .andWhereRaw("end_date >= now()");
-      } else if (active !== undefined && active == "0") {
-        return allChallenges.andWhereRaw("end_date <= now()");
-      } else {
-        return allChallenges;
-      }
+  var selectedChallenges = db("challenges_users")
+    .select(
+      "challenges_users.challenge_id",
+      "challenges.name",
+      "challenges.start_date",
+      "challenges.end_date",
+      "challenges.challenge_type",
+      "challenges.goal",
+      "cu2.fbid",
+      "users.first_name",
+      "users.last_name"
+    )
+    .leftJoin(
+      "challenges",
+      "challenges_users.challenge_id",
+      "challenges.challenge_id"
+    )
+    .leftJoin(
+      "challenges_users AS cu2",
+      "challenges.challenge_id",
+      "cu2.challenge_id"
+    )
+    .leftJoin("users", "cu2.fbid", "users.fbid")
+    .where("challenges_users.fbid", fbid);
+
+  if (active !== undefined && active == "1") {
+    selectedChallenges = selectedChallenges
+      .andWhereRaw("start_date < now()")
+      .andWhereRaw("end_date >= now()");
+  } else if (active !== undefined && active == "0") {
+    selectedChallenges = selectedChallenges.andWhereRaw("end_date <= now()");
+  }
+  return selectedChallenges
+    .then(selectedChallenges => {
+      var challengeObj = _.groupBy(selectedChallenges, "challenge_id");
+      return _.map(challengeObj, (v, k, obj) => {
+        return {
+          challenge_id: k,
+          name: v[0].name,
+          start_date: v[0].start_date,
+          end_date: v[0].end_date,
+          challenge_type: v[0].challenge_type,
+          goal: v[0].goal,
+          users: _.map(v, (elem, idx, l) => {
+            return {
+              fbid: elem.fbid,
+              first_name: elem.first_name,
+              last_name: elem.last_name
+            };
+          })
+        };
+      });
     })
     .catch(err => {
-      throw UserCreationError(err);
+      throw ChallengeQueryError(err);
     });
 };
 

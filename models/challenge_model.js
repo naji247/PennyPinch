@@ -2,8 +2,8 @@ var db = require("../db");
 const { InvalidRequestError } = require("../errors/common_errors");
 const { ChallengeCreationError } = require("../errors/challenge_errors");
 
-exports.create = (start_date, end_date, name, challenge_type, fbids) => {
-  if ((!start_date || !end_date || !name || !challenge_type, !fbids)) {
+exports.create = (start_date, end_date, name, challenge_type, goal, fbids) => {
+  if (!start_date || !end_date || !name || !challenge_type || !goal || !fbids) {
     throw InvalidRequestError();
   }
 
@@ -11,7 +11,8 @@ exports.create = (start_date, end_date, name, challenge_type, fbids) => {
     start_date: start_date,
     end_date: end_date,
     name: name,
-    challenge_type: challenge_type
+    challenge_type: challenge_type,
+    goal: goal
   };
 
   var createdChallenge = null;
@@ -32,4 +33,8 @@ exports.create = (start_date, end_date, name, challenge_type, fbids) => {
     .catch(err => {
       throw ChallengeCreationError(err);
     });
+};
+
+exports.getProgress = (fbid, challengeId) => {
+  return db("challenges").select();
 };

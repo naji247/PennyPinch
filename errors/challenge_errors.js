@@ -22,7 +22,16 @@ const ChallengeCreationError = err => {
   };
 };
 
+const ChallengeQueryError = err => {
+  return {
+    type: "HTTPError",
+    statusCode: 500,
+    message: "Error querying database for challenges"
+  };
+};
+
 module.exports = {
   ChallengeParticipationError,
-  ChallengeCreationError
+  ChallengeCreationError,
+  ChallengeQueryError
 };
