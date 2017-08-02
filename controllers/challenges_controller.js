@@ -4,6 +4,18 @@ var express = require("express"),
 const { UserIDMismatchError } = require("../errors/user_errors");
 const { ChallengeParticipationError } = require("../errors/challenge_errors");
 
+router.get("/:challenge_id", function(req, res, next) {
+  const challenge_id = req.params.challenge_id;
+
+  Challenge.get(challenge_id)
+    .then(challenge => {
+      res.json(challenge);
+    })
+    .catch(err => {
+      next(err);
+    });
+});
+
 router.post("/", function(req, res, next) {
   const { start_date, end_date, name, challenge_type, goal, fbids } = req.body;
   const fbid = req.headers.fbid;

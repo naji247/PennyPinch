@@ -4,7 +4,6 @@ var express = require("express"),
 const { UserIDMismatchError } = require("../errors/user_errors");
 
 router.get("/:fbid", function(req, res, next) {
-  const token = req.headers.fbtoken;
   const fbid = req.params.fbid;
 
   User.getUser(fbid)
@@ -17,7 +16,6 @@ router.get("/:fbid", function(req, res, next) {
 });
 
 router.get("/:fbid/challenges", function(req, res, next) {
-  const token = req.headers.fbtoken;
   const fbid = req.params.fbid;
   const active = req.query.active;
 

@@ -123,22 +123,12 @@ const getChallenges = (fbid, active) => {
   return selectedChallenges
     .then(selectedChallenges => {
       var challengeObj = _.groupBy(selectedChallenges, "challenge_id");
-      return _.map(challengeObj, (v, k, obj) => {
-        return {
-          challenge_id: k,
-          name: v[0].name,
-          start_date: v[0].start_date,
-          end_date: v[0].end_date,
-          challenge_type: v[0].challenge_type,
-          goal: v[0].goal,
-          users: _.map(v, (elem, idx, l) => {
-            return {
-              fbid: elem.fbid,
-              first_name: elem.first_name,
-              last_name: elem.last_name
-            };
-          })
-        };
+      return _.map(challengeObj, rows => {
+        currChallenge = _.omit(rows[0], ["fbid", "first_name", "last_name"]);
+        currChallenge.users = _.map(rows, elem =>
+          _.pick(elem, ["fbid", "first_name", "last_name"])
+        );
+        return currChallenge;
       });
     })
     .catch(err => {
