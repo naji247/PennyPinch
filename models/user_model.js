@@ -121,6 +121,7 @@ const getChallenges = (fbid, active) => {
     selectedChallenges = selectedChallenges.andWhereRaw("end_date <= now()");
   }
   return selectedChallenges
+    .orderBy("end_date", "ASC")
     .then(selectedChallenges => {
       var challengeObj = _.groupBy(selectedChallenges, "challenge_id");
       return _.map(challengeObj, rows => {
