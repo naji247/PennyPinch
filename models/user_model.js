@@ -24,9 +24,12 @@ const createUser = (token, fbid, first_name, last_name, email) => {
     last_name: last_name,
     email: email
   };
-  return db("users").returning("*").insert(user).catch(err => {
-    throw UserCreationError(err);
-  });
+  return db("users")
+    .returning("*")
+    .insert(user)
+    .catch(err => {
+      throw UserCreationError(err);
+    });
 };
 
 const getUser = fbid => {
@@ -34,12 +37,15 @@ const getUser = fbid => {
     throw InvalidRequestError();
   }
 
-  return db("users").first("*").where({ fbid: fbid }).then(user => {
-    if (!user) {
-      throw UserNotFoundError();
-    }
-    return user;
-  });
+  return db("users")
+    .first("*")
+    .where({ fbid: fbid })
+    .then(user => {
+      if (!user) {
+        throw UserNotFoundError();
+      }
+      return user;
+    });
 };
 
 const loginUser = (token, fbid, first_name, last_name, email) => {
@@ -88,46 +94,89 @@ const getChallenges = (fbid, active) => {
   if (!fbid) {
     throw InvalidRequestError();
   }
-  var selectedChallenges = db("challenges_users")
+  var challenge_ids = db("challenges_users")
+    .select("challenge_id")
+    .where("fbid", fbid);
+
+  var query = db
+    .with("participating_users", qb => {
+      qb
+        .select(
+          "challenges.challenge_id",
+          "challenges.name",
+          "challenges.start_date",
+          "challenges.end_date",
+          "challenges.challenge_type",
+          "challenges.goal",
+          "users.first_name",
+          "users.last_name",
+          "users.fbid"
+        )
+        .from("challenges")
+        .leftJoin(
+          "challenges_users",
+          "challenges.challenge_id",
+          "challenges_users.challenge_id"
+        )
+        .leftJoin("users", "challenges_users.fbid", "users.fbid")
+        .where("challenges.challenge_id", "in", challenge_ids);
+    })
     .select(
-      "challenges_users.challenge_id",
-      "challenges.name",
-      "challenges.start_date",
-      "challenges.end_date",
-      "challenges.challenge_type",
-      "challenges.goal",
-      "cu2.fbid",
-      "users.first_name",
-      "users.last_name"
+      "participating_users.*",
+      db.raw("COALESCE(SUM(-all_transactions.amount),0) AS spent")
     )
-    .leftJoin(
-      "challenges",
-      "challenges_users.challenge_id",
-      "challenges.challenge_id"
+    .from(function() {
+      this.select("participating_users.*", "transactions.amount")
+        .from("participating_users")
+        .leftJoin(
+          "transactions",
+          "participating_users.fbid",
+          "transactions.fbid"
+        )
+        .where("transactions.amount", "<", 0)
+        .andWhereRaw(
+          "transactions.date BETWEEN participating_users.start_date AND participating_users.end_date"
+        )
+        .as("all_transactions");
+    })
+    .rightJoin(
+      "participating_users",
+      "participating_users.fbid",
+      "all_transactions.fbid"
     )
-    .leftJoin(
-      "challenges_users AS cu2",
-      "challenges.challenge_id",
-      "cu2.challenge_id"
+    .groupBy(
+      "participating_users.challenge_id",
+      "participating_users.name",
+      "participating_users.start_date",
+      "participating_users.end_date",
+      "participating_users.challenge_type",
+      "participating_users.goal",
+      "participating_users.fbid",
+      "participating_users.first_name",
+      "participating_users.last_name"
     )
-    .leftJoin("users", "cu2.fbid", "users.fbid")
-    .where("challenges_users.fbid", fbid);
+    .orderBy("participating_users.end_date", "ASC")
+    .orderByRaw("spent ASC");
 
   if (active !== undefined && active == "1") {
-    selectedChallenges = selectedChallenges
-      .andWhereRaw("start_date < now()")
-      .andWhereRaw("end_date >= now()");
+    query = query
+      .andWhereRaw("participating_users.start_date < now()")
+      .andWhereRaw("participating_users.end_date >= now()");
   } else if (active !== undefined && active == "0") {
-    selectedChallenges = selectedChallenges.andWhereRaw("end_date <= now()");
+    query = query.andWhereRaw("participating_users.end_date <= now()");
   }
-  return selectedChallenges
-    .orderBy("end_date", "ASC")
-    .then(selectedChallenges => {
-      var challengeObj = _.groupBy(selectedChallenges, "challenge_id");
+  return query
+    .then(queryRes => {
+      var challengeObj = _.groupBy(queryRes, "challenge_id");
       return _.map(challengeObj, rows => {
-        currChallenge = _.omit(rows[0], ["fbid", "first_name", "last_name"]);
+        currChallenge = _.omit(rows[0], [
+          "fbid",
+          "first_name",
+          "last_name",
+          "spent"
+        ]);
         currChallenge.users = _.map(rows, elem =>
-          _.pick(elem, ["fbid", "first_name", "last_name"])
+          _.pick(elem, ["fbid", "first_name", "last_name", "spent"])
         );
         return currChallenge;
       });
