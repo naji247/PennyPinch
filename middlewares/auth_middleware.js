@@ -13,10 +13,10 @@ module.exports = app => {
     }
     graph.setAccessToken(token);
     graph
-      .getAsync("debug_token", { input_token: token })
+      .getAsync("me", { input_token: token })
       .then(tokenInfo => {
         //TODO: Add check for current app matches token
-        if (!tokenInfo.data.is_valid || tokenInfo.data.user_id != fbid) {
+        if (!tokenInfo.id || tokenInfo.id != fbid) {
           throw UserUnauthorizedError();
         }
         next();
